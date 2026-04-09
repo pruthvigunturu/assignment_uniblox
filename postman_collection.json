@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "Uniblox Ecommerce API",
+    "description": "API collection for the ecommerce assignment - Cart Operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Cart Operations",
+      "description": "Endpoints for managing shopping cart",
+      "item": [
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user1\",\n  \"productId\": \"prod1\",\n  \"quantity\": 2,\n  \"price\": 10.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/cart/add",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "cart", "add"]
+            },
+            "description": "Add an item to the user's cart. If item already exists, quantity will be updated."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"user1\",\n  \"productId\": \"prod1\",\n  \"quantity\": 2,\n  \"price\": 10.0\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/cart/add",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "cart", "add"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "plain",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/plain;charset=UTF-8"
+                }
+              ],
+              "body": "Item added to cart"
+            }
+          ]
+        },
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/cart/user1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "cart", "user1"]
+            },
+            "description": "Retrieve the cart for a specific user. Returns 404 if cart does not exist."
+          },
+          "response": [
+            {
+              "name": "Cart Found (200 OK)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/cart/user1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "cart", "user1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ]\n}"
+            },
+            {
+              "name": "Cart Not Found (404)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/cart/unknown-user",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "cart", "unknown-user"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
