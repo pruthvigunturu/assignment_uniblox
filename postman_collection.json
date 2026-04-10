@@ -1,13 +1,13 @@
 {
   "info": {
     "name": "Uniblox Ecommerce API",
-    "description": "API collection for the ecommerce assignment - Cart Operations",
+    "description": "Complete API collection for the ecommerce assignment including Cart Operations and Checkout functionality",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "Cart Operations",
-      "description": "Endpoints for managing shopping cart",
+      "description": "Endpoints for managing shopping cart - Add items and retrieve cart contents",
       "item": [
         {
           "name": "Add to Cart",
@@ -30,11 +30,11 @@
               "port": "8080",
               "path": ["api", "cart", "add"]
             },
-            "description": "Add an item to the user's cart. If item already exists, quantity will be updated."
+            "description": "Add an item to the user's cart. If item already exists, quantity will be updated instead of adding duplicate."
           },
           "response": [
             {
-              "name": "Success",
+              "name": "Success (200 OK)",
               "originalRequest": {
                 "method": "POST",
                 "header": [
@@ -80,7 +80,7 @@
               "port": "8080",
               "path": ["api", "cart", "user1"]
             },
-            "description": "Retrieve the cart for a specific user. Returns 404 if cart does not exist."
+            "description": "Retrieve the cart for a specific user with all items. Returns 404 if cart does not exist."
           },
           "response": [
             {
@@ -105,7 +105,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ]\n}"
+              "body": "{\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    },\n    {\n      \"productId\": \"prod2\",\n      \"quantity\": 1,\n      \"price\": 25.0\n    }\n  ]\n}"
             },
             {
               "name": "Cart Not Found (404)",
@@ -130,6 +130,170 @@
                 }
               ],
               "body": "{}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Checkout Operations",
+      "description": "Endpoints for processing checkout and order management - Validate discount codes and place orders",
+      "item": [
+        {
+          "name": "Checkout (Place Order)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user1\",\n  \"discountCode\": \"DISC_CODE_123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/checkout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["api", "checkout"]
+            },
+            "description": "Process checkout and place an order. Validates discount code if provided. Clears the cart after successful order placement. Generates a discount code for every 5th order."
+          },
+          "response": [
+            {
+              "name": "Successful Checkout (200 OK) - Without Discount",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"user1\",\n  \"discountCode\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/checkout",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "checkout"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"orderId\": \"ORDER_user1_1713046800000\",\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ],\n  \"totalAmount\": 20.0,\n  \"discountApplied\": 0.0\n}"
+            },
+            {
+              "name": "Successful Checkout (200 OK) - With Valid Discount",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"user1\",\n  \"discountCode\": \"DISCuser11713046800000\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/checkout",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "checkout"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"orderId\": \"ORDER_user1_1713046800000\",\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ],\n  \"totalAmount\": 18.0,\n  \"discountApplied\": 2.0\n}"
+            },
+            {
+              "name": "Checkout Failed (400) - Empty Cart",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"user_with_empty_cart\",\n  \"discountCode\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/checkout",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "checkout"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Cart is empty\"\n}"
+            },
+            {
+              "name": "Checkout Failed (400) - Invalid Discount Code",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"userId\": \"user1\",\n  \"discountCode\": \"INVALID_CODE\"\n}"
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/checkout",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "8080",
+                  "path": ["api", "checkout"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid or used discount code\"\n}"
             }
           ]
         }
