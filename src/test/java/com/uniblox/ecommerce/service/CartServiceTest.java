@@ -6,13 +6,15 @@ import com.uniblox.ecommerce.model.CartItem;
 import com.uniblox.ecommerce.repository.CartRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class CartServiceTest {
 
     @Mock
@@ -21,13 +23,9 @@ class CartServiceTest {
     @InjectMocks
     private CartService cartService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
-    void testAddToCart_NewCart() {
+    void addToCart_NewCart_ShouldCreateAndAddItem() {
+        // Arrange
         AddToCartRequest request = new AddToCartRequest();
         request.setUserId("user1");
         request.setProductId("prod1");
@@ -36,13 +34,16 @@ class CartServiceTest {
 
         when(cartRepository.findByUserId("user1")).thenReturn(null);
 
+        // Act
         cartService.addToCart(request);
 
+        // Assert
         verify(cartRepository).save(any(Cart.class));
     }
 
     @Test
-    void testAddToCart_ExistingItem() {
+    void addToCart_ExistingItem_ShouldUpdateQuantity() {
+        // Arrange
         Cart existingCart = new Cart();
         existingCart.setUserId("user1");
         CartItem item = new CartItem("prod1", 1, 10.0);
@@ -56,21 +57,63 @@ class CartServiceTest {
 
         when(cartRepository.findByUserId("user1")).thenReturn(existingCart);
 
+        // Act
         cartService.addToCart(request);
 
-        assertEquals(3, item.getQuantity());
+        // Assert
+        assertEquals(3, item.getQuantity()); // 1 + 2
+        assertEquals(1, existingCart.getItems().size()); // No duplicate
         verify(cartRepository).save(existingCart);
     }
 
     @Test
-    void testGetCart() {
+    void addToCart_NewItemToExistingCart_ShouldAddNewItem() {
+        // Arrange
+        Cart existingCart = new Cart();
+        existingCart.setUserId("user1");
+        existingCart.getItems().add(new CartItem("prod1", 1, 10.0));
+
+        AddToCartRequest request = new AddToCartRequest();
+        request.setUserId("user1");
+        request.setProductId("prod2");
+        request.setQuantity(3);
+        request.setPrice(20.0);
+
+        when(cartRepository.findByUserId("user1")).thenReturn(existingCart);
+
+        // Act
+        cartService.addToCart(request);
+
+        // Assert
+        assertEquals(2, existingCart.getItems().size());
+        verify(cartRepository).save(existingCart);
+    }
+
+    @Test
+    void getCart_ExistingCart_ShouldReturnCart() {
+        // Arrange
         Cart cart = new Cart();
         cart.setUserId("user1");
-
         when(cartRepository.findByUserId("user1")).thenReturn(cart);
 
+        // Act
         Cart result = cartService.getCart("user1");
 
-        assertEquals(cart, result);
+        // Assert
+        assertNotNull(result);
+        assertEquals("user1", result.getUserId());
+        verify(cartRepository).findByUserId("user1");
+    }
+
+    @Test
+    void getCart_NonExistingCart_ShouldReturnNull() {
+        // Arrange
+        when(cartRepository.findByUserId("nonexistent")).thenReturn(null);
+
+        // Act
+        Cart result = cartService.getCart("nonexistent");
+
+        // Assert
+        assertNull(result);
     }
 }
