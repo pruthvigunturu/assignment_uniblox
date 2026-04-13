@@ -293,12 +293,152 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"error\": \"Invalid or used discount code\"\n}"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
+               "body": "{\n  \"error\": \"Invalid or used discount code\"\n}"
+             }
+           ]
+         }
+       ]
+     },
+    {
+      "name": "Admin Operations",
+     "description": "Admin endpoints for statistics and discount code generation",
+     "item": [
+       {
+         "name": "Get Stats",
+         "request": {
+           "method": "GET",
+           "header": [],
+           "url": {
+             "raw": "http://localhost:8080/api/admin/stats",
+             "protocol": "http",
+             "host": ["localhost"],
+             "port": "8080",
+             "path": ["api", "admin", "stats"]
+           },
+           "description": "Get store statistics: total items purchased, total revenue, discount codes generated, total discounts given"
+         },
+         "response": [
+           {
+             "name": "Stats Retrieved (200 OK)",
+             "originalRequest": {
+               "method": "GET",
+               "header": [],
+               "url": {
+                 "raw": "http://localhost:8080/api/admin/stats",
+                 "protocol": "http",
+                 "host": ["localhost"],
+                 "port": "8080",
+                 "path": ["api", "admin", "stats"]
+               }
+             },
+             "status": "OK",
+             "code": 200,
+             "_postman_previewlanguage": "json",
+             "header": [
+               {
+                 "key": "Content-Type",
+                 "value": "application/json"
+               }
+             ],
+             "body": "{\n  \"totalItemsPurchased\": 15,\n  \"totalRevenue\": 250.0,\n  \"totalDiscountCodes\": 2,\n  \"totalDiscountsGiven\": 25.0\n}"
+           }
+         ]
+       },
+       {
+         "name": "Generate Discount",
+         "request": {
+           "method": "POST",
+           "header": [
+             {
+               "key": "Content-Type",
+               "value": "application/json"
+             }
+           ],
+           "body": {
+             "mode": "raw",
+             "raw": "{\n  \"userId\": \"user1\"\n}"
+           },
+           "url": {
+             "raw": "http://localhost:8080/api/admin/generate-discount",
+             "protocol": "http",
+             "host": ["localhost"],
+             "port": "8080",
+             "path": ["api", "admin", "generate-discount"]
+           },
+           "description": "Generate a discount code for a user who has completed a multiple of 5 orders (eligibility check performed server-side)"
+         },
+         "response": [
+           {
+             "name": "Discount Generated (200 OK)",
+             "originalRequest": {
+               "method": "POST",
+               "header": [
+                 {
+                   "key": "Content-Type",
+                   "value": "application/json"
+                 }
+               ],
+               "body": {
+                 "mode": "raw",
+                 "raw": "{\n  \"userId\": \"user1\"\n}"
+               },
+               "url": {
+                 "raw": "http://localhost:8080/api/admin/generate-discount",
+                 "protocol": "http",
+                 "host": ["localhost"],
+                 "port": "8080",
+                 "path": ["api", "admin", "generate-discount"]
+               }
+             },
+             "status": "OK",
+             "code": 200,
+             "_postman_previewlanguage": "text",
+             "header": [
+               {
+                   "key": "Content-Type",
+                   "value": "text/plain;charset=UTF-8"
+               }
+             ],
+             "body": "Discount generated for user user1"
+           },
+           {
+             "name": "Not Eligible (400)",
+             "originalRequest": {
+               "method": "POST",
+               "header": [
+                 {
+                   "key": "Content-Type",
+                   "value": "application/json"
+                 }
+               ],
+               "body": {
+                 "mode": "raw",
+                 "raw": "{\n  \"userId\": \"user1\"\n}"
+               },
+               "url": {
+                 "raw": "http://localhost:8080/api/admin/generate-discount",
+                 "protocol": "http",
+                 "host": ["localhost"],
+                 "port": "8080",
+                 "path": ["api", "admin", "generate-discount"]
+               }
+             },
+             "status": "Bad Request",
+             "code": 400,
+             "_postman_previewlanguage": "text",
+             "header": [
+               {
+                 "key": "Content-Type",
+                 "value": "text/plain;charset=UTF-8"
+               }
+             ],
+             "body": "User not eligible for discount"
+           }
+         ]
+       }
+     ]
+   }
+ ]
+ }
+
 

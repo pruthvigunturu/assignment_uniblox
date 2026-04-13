@@ -36,13 +36,28 @@ POST /api/checkout
 Response: 200 OK - Order object (or 400 on error)
 ```
 
+### Admin: Get Stats
+```
+GET /api/admin/stats
+Response: 200 OK - { totalItemsPurchased, totalRevenue, totalDiscountCodes, totalDiscountsGiven }
+```
+
+### Admin: Generate Discount
+```
+POST /api/admin/generate-discount
+{ "userId": "user1" }
+Response: 200 OK or 400 if user not eligible (not at 5th order multiple)
+```
+
 ## Features
 
 - Add items to cart (updates quantity on duplicate)
 - Checkout with discount validation
 - Auto-generate 10% discount after 5th order
 - One-time use discount codes
-- 37 unit tests (99% coverage)
+- Admin: View statistics (items, revenue, discounts)
+- Admin: Generate discount codes for eligible users
+- ~50 unit tests (100% pass rate)
 
 ## Tech Stack
 
@@ -51,7 +66,7 @@ Java 17, Spring Boot 4.0.5, Maven, JUnit 5, Mockito, JaCoCo, ConcurrentHashMap
 ## Structure
 
 ```
-controller/  CartController, CheckoutController
+controller/  CartController, CheckoutController, AdminController
 service/     CartService, OrderService
 repository/  CartRepository, OrderRepository, UserRepository, DiscountRepository
 model/       Cart, CartItem, Order, User, Discount
