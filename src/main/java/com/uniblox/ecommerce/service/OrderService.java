@@ -1,21 +1,15 @@
 package com.uniblox.ecommerce.service;
 
+import com.uniblox.ecommerce.AppConstants;
 import com.uniblox.ecommerce.dto.CheckoutRequest;
 import com.uniblox.ecommerce.model.*;
 import com.uniblox.ecommerce.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.List;
 
-/**
- * OrderService - Core checkout and discount logic
- *
- * Key Responsibilities:
- * 1. Process checkout: validate cart, apply discount, create order
- * 2. Manage user order count for reward eligibility
- * 3. Auto-generate discounts on every 5th order
- */
 @Service
 public class OrderService {
 
@@ -25,88 +19,75 @@ public class OrderService {
     private OrderRepository orderRepository;
     @Autowired
     private DiscountRepository discountRepository;
-    @Autowired
-    private UserRepository userRepository;
 
-    // REWARD SYSTEM: Every 5th order gets a 10% discount
-    private static final int NTH_ORDER = 5;
-    private static final double DISCOUNT_PERCENTAGE = 10.0;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
-    /**
-     * Process checkout: create order from cart, validate/apply discount, track user orders, generate rewards
-     *
-     * Flow:
-     * 1. Validate cart exists and has items → 400 if empty
-     * 2. Calculate total from all cart items
-     * 3. If discount code provided: validate (must be unused) → 400 if invalid
-     * 4. Create order with discount applied
-     * 5. Increment user order count
-     * 6. Check if user qualifies for reward (every 5th order)
-     * 7. Clear cart after successful checkout
-     */
     public Order checkout(CheckoutRequest request) {
-        // CRITICAL: Validate cart before proceeding
         Cart cart = cartRepository.findByUserId(request.getUserId());
         if (cart == null || cart.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
         }
 
-        // Calculate order total from all items (price * quantity per item)
         double totalAmount = cart.getItems().stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
 
-        // CRITICAL: Discount validation - one-time use only
         double discountApplied = 0.0;
         if (request.getDiscountCode() != null && !request.getDiscountCode().isEmpty()) {
             Discount discount = discountRepository.findByCode(request.getDiscountCode());
-            // Must exist AND not be used previously
-            if (discount != null && !discount.isUsed()) {
-                discountApplied = totalAmount * (discount.getPercentage() / 100.0);
-                discount.setUsed(true); // Mark as used to prevent reuse
-                discountRepository.save(discount);
-            } else {
+            if (discount == null || discount.isUsed()) {
                 throw new IllegalArgumentException("Invalid or used discount code");
             }
+            if (discount.getUserId() != null && !discount.getUserId().equals(request.getUserId())) {
+                throw new IllegalArgumentException("Discount code does not belong to this user");
+            }
+            discountApplied = totalAmount * (discount.getPercentage() / 100.0);
+            discount.setUsed(true);
+            discountRepository.save(discount);
         }
 
-        double finalAmount = totalAmount - discountApplied;
-
-        // Create order record with applied discount
         Order order = new Order();
         order.setUserId(request.getUserId());
         order.setItems(cart.getItems());
-        order.setTotalAmount(finalAmount);
+        order.setTotalAmount(totalAmount - discountApplied);
         order.setDiscountApplied(discountApplied);
         orderRepository.save(order);
 
-        // REWARD SYSTEM: Track user order count for 5th order reward
-        User user = userRepository.findByUserId(request.getUserId());
-        user.setOrderCount(user.getOrderCount() + 1);
-        userRepository.save(user);
+        long orderCount = orderRepository.findAll().stream()
+                .filter(o -> request.getUserId().equals(o.getUserId()))
+                .count();
 
-        // CRITICAL: Check if eligible for discount reward (every 5th order)
-        if (user.getOrderCount() % NTH_ORDER == 0) {
-            generateDiscountForUser(request.getUserId());
+        if (orderCount > 0 && orderCount % AppConstants.NTH_ORDER == 0) {
+            try {
+                generateDiscountForUser(request.getUserId());
+            } catch (Exception e) {
+                // coupon generation failure must not fail the completed order
+            }
         }
 
-        // IMPORTANT: Clear cart after successful checkout to prevent duplicate orders
         cartRepository.deleteByUserId(request.getUserId());
 
         return order;
     }
 
-    /**
-     * Generate discount code for user (called after 5th order).
-     * Format: DISC<userId><timestamp> ensures uniqueness and traceability
-     */
     public void generateDiscountForUser(String userId) {
+        StringBuilder sb = new StringBuilder(AppConstants.DISCOUNT_CODE_PREFIX);
+        for (int i = 0; i < AppConstants.DISCOUNT_CODE_LENGTH; i++) {
+            sb.append(AppConstants.DISCOUNT_CODE_ALPHABET.charAt(
+                    RANDOM.nextInt(AppConstants.DISCOUNT_CODE_ALPHABET.length())));
+        }
         Discount discount = new Discount();
-        // Unique code: userId + timestamp guarantees no collisions
-        discount.setCode("DISC" + userId + System.currentTimeMillis());
-        discount.setPercentage(DISCOUNT_PERCENTAGE);
+        discount.setCode(sb.toString());
+        discount.setUserId(userId);
+        discount.setPercentage(AppConstants.DISCOUNT_PERCENTAGE);
         discount.setUsed(false);
         discountRepository.save(discount);
+    }
+
+    public long getOrderCountForUser(String userId) {
+        return orderRepository.findAll().stream()
+                .filter(o -> userId.equals(o.getUserId()))
+                .count();
     }
 
     public List<Order> getAllOrders() {
@@ -117,4 +98,3 @@ public class OrderService {
         return discountRepository.findAll();
     }
 }
-
