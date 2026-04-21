@@ -21,7 +21,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"user1\",\n  \"productId\": \"prod1\",\n  \"quantity\": 2,\n  \"price\": 10.0\n}"
+              "raw": "{\n  \"userId\": \"user1\",\n  \"productId\": \"prod1\",\n  \"quantity\": 1,\n  \"price\": 10.0\n}"
             },
             "url": {
               "raw": "http://localhost:8080/api/cart/add",

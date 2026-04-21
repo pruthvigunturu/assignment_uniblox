@@ -92,6 +92,7 @@ Coverage: Controllers 100%, Services 100%, Repositories 96%
 
 ## Error Codes
 
+- 200: Success
 - 400: Empty cart or invalid discount code
 - 404: Cart not found
 - 500: Server error

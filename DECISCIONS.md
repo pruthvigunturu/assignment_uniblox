@@ -24,7 +24,7 @@
 - ConcurrentHashMap (thread-safe)
 - SQL/NoSQL database
 
-**Choice:** ConcurrentHashMap.
+**Choice:** ConcurrentHashMap
 
 **Why:** Thread-safe for concurrent requests. O(1) average operation time. No external dependencies. Perfect for assignment requirements. Data lost on restart is acceptable for this scope.
 
@@ -60,34 +60,19 @@
 
 ---
 
-## Decision: Comprehensive Unit Testing with Mocks
+## Decision: Discount Code Format (Prefix + SecureRandom)
 
-**Context:** Assignment emphasizes understanding code quality. Need to validate all business logic works correctly.
-
-**Options Considered:**
-- No tests
-- Only integration tests
-- Comprehensive unit tests with mocks
-
-**Choice:** Comprehensive unit testing (37 tests).
-
-**Why:** High code coverage on critical business logic. Fast feedback (2 seconds execution). Tests in isolation using mocks. Easy to identify what breaks when code changes. Demonstrates quality and reduces bugs.
-
----
-
-## Decision: Discount Code Format (User + Timestamp)
-
-**Context:** Need to generate unique, identifiable discount codes.
+**Context:** Need to generate unique, unguessable discount codes that are safe for users to type manually.
 
 **Options Considered:**
-- Random alphanumeric strings
-- Sequential numbers
-- User-based with timestamp
-- UUID format
+- User ID + timestamp (predictable — an attacker who knows userId and approximate generation time can enumerate codes)
+- UUID (36 chars, contains ambiguous lowercase + hyphens, designed for machine IDs not human entry)
+- Sequential ID encoded with Hashids/Sqids (reversible encoding, adds a third-party dependency)
+- Prefix + SecureRandom over a curated alphabet
 
-**Choice:** User-based with timestamp (e.g., DISCuser11713046800000).
+**Choice:** `UNI` prefix + 8 cryptographically random characters from a custom alphabet.
 
-**Why:** Guaranteed unique (user ID + timestamp combination). Traceable to identify which user earned it. Simple to construct without external libraries. Debuggable for support purposes.
+**Why:** `SecureRandom` is cryptographically unpredictable — unlike `Random` it cannot be seeded and brute-forced. The custom alphabet (`ABCDEFGHJKLMNPQRSTUVWXYZ23456789`) excludes ambiguous characters (I, l, 1, O, 0) so users can type codes without confusion. 32^8 ≈ 1 trillion combinations makes enumeration infeasible. No external dependency required. Not reversible — there is no encoding to decode.
 
 ---
 
@@ -119,6 +104,34 @@
 **Choice:** Throw meaningful exceptions.
 
 **Why:** Clear what went wrong immediately. Stack traces show exact problem location. Standard Java exception pattern. Easy to test with assertThrows. Controllers map exceptions to appropriate HTTP status codes.
+
+---
+
+## Decision: User-Bound Discount Codes
+
+**Context:** Discount codes are generated as rewards for a specific user completing their nth order. Decide whether codes should be tied to that user or usable by anyone.
+
+**Options Considered:**
+- Global codes — any user can apply any valid code (simple, but codes can be shared or stolen)
+- User-bound codes — validate that the code's owner matches the user at checkout
+
+**Choice:** User-bound codes. Each generated code stores the `userId` of the earner and is validated against the requesting user at checkout.
+
+**Why:** A reward program loses integrity if codes are shareable. User binding ensures only the user who earned the code can redeem it, preventing code sharing, leaking, or scraping. Implementation cost is minimal: one field on `Discount`, one equality check in `OrderService.checkout()`.
+
+---
+
+## Decision: Calculate Order Count On-The-Fly from Orders
+
+**Context:** The nth-order reward system needs to know how many orders a user has placed. Decide whether to maintain a counter on the User object or derive the count from stored orders.
+
+**Options Considered:**
+- Store `orderCount` on a `User` model, increment on each checkout
+- Derive count by filtering `OrderRepository.findAll()` by userId at checkout time
+
+**Choice:** Derive on-the-fly from `OrderRepository`.
+
+**Why:** A stored counter is a second source of truth that can diverge from reality — if the counter increment succeeds but the order save fails (or vice versa), the count is wrong and either a reward is missed or incorrectly triggered. Deriving from actual orders is always consistent. For an in-memory store with modest order volume, the O(n) scan is negligible. This also eliminates the `User` model and `UserRepository` entirely, reducing complexity.
 
 ---
 
