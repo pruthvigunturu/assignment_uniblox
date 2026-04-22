@@ -1,6 +1,7 @@
 package com.uniblox.ecommerce.controller;
 
 import com.uniblox.ecommerce.AppConstants;
+import com.uniblox.ecommerce.model.CartItem;
 import com.uniblox.ecommerce.model.Discount;
 import com.uniblox.ecommerce.model.Order;
 import com.uniblox.ecommerce.service.OrderService;
@@ -25,7 +26,7 @@ public class AdminController {
         Iterable<Discount> discounts = orderService.getAllDiscounts();
 
         int totalItemsPurchased = orders.stream()
-                .mapToInt(order -> order.getItems().stream().mapToInt(item -> item.getQuantity()).sum())
+                .mapToInt(order -> order.getItems().stream().mapToInt(CartItem::getQuantity).sum())
                 .sum();
 
         double totalRevenue = orders.stream().mapToDouble(Order::getTotalAmount).sum();
@@ -52,11 +53,16 @@ public class AdminController {
     public ResponseEntity<String> generateDiscount(@RequestBody Map<String, String> body) {
         String userId = body.get("userId");
         long orderCount = orderService.getOrderCountForUser(userId);
-        if (orderCount > 0 && orderCount % AppConstants.NTH_ORDER == 0) {
-            orderService.generateDiscountForUser(userId);
-            return ResponseEntity.ok("Discount generated for user " + userId);
-        } else {
+        long entitledCodes = orderCount / AppConstants.NTH_ORDER;
+        long issuedCodes = orderService.getIssuedDiscountCountForUser(userId);
+
+        if (entitledCodes == 0) {
             return ResponseEntity.badRequest().body("User not eligible for discount");
         }
+        if (issuedCodes >= entitledCodes) {
+            return ResponseEntity.badRequest().body("Discount already issued for this milestone");
+        }
+        orderService.generateDiscountForUser(userId);
+        return ResponseEntity.ok("Discount generated for user " + userId);
     }
 }

@@ -135,6 +135,21 @@
 
 ---
 
+## Decision: Prevent Duplicate Discount Codes from Admin Endpoint
+
+**Context:** The admin `POST /api/admin/generate-discount` endpoint is a manual fallback for issuing codes that failed to generate automatically. Without a guard, calling it multiple times for the same user at the same milestone would issue multiple codes for a single earned reward.
+
+**Options Considered:**
+- No guard — trust the admin not to call it twice (not safe, human error possible)
+- Track last milestone rewarded on the user object (adds state that can drift)
+- Derive entitlement from orders and compare against codes already issued
+
+**Choice:** Compare `issuedCodes` (count of discount codes stored for this user) against `entitledCodes` (`orderCount / NTH_ORDER`). Reject with 400 if `issuedCodes >= entitledCodes`.
+
+**Why:** Derived entirely from existing data — no new state needed. `entitledCodes` is always the ground truth of what the user has earned. `issuedCodes` counts what they actually received. The gap between them is exactly how many codes can still be issued. Consistent with the principle of deriving counts from actual records rather than maintaining separate counters.
+
+---
+
 ## Decision: Update Quantity on Duplicate Items in Cart
 
 **Context:** User adds same product to cart multiple times. Need to decide handling.

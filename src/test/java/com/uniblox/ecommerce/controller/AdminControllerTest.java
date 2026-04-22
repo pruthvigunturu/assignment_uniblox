@@ -182,12 +182,29 @@ class AdminControllerTest {
         Map<String, String> body = new HashMap<>();
         body.put("userId", "user1");
 
-        when(orderService.getOrderCountForUser("user1")).thenReturn(3L);
+        // below first milestone — entitledCodes = 0
+        when(orderService.getOrderCountForUser("user1")).thenReturn((long) AppConstants.NTH_ORDER - 1);
 
         ResponseEntity<String> response = adminController.generateDiscount(body);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("User not eligible for discount", response.getBody());
+        verify(orderService, never()).generateDiscountForUser("user1");
+    }
+
+    @Test
+    void generateDiscount_AlreadyReceivedCode_ShouldReturnBadRequest() {
+        Map<String, String> body = new HashMap<>();
+        body.put("userId", "user1");
+
+        // user is at first milestone but has already received their code
+        when(orderService.getOrderCountForUser("user1")).thenReturn((long) AppConstants.NTH_ORDER);
+        when(orderService.getIssuedDiscountCountForUser("user1")).thenReturn(1L);
+
+        ResponseEntity<String> response = adminController.generateDiscount(body);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Discount already issued for this milestone", response.getBody());
         verify(orderService, never()).generateDiscountForUser("user1");
     }
 

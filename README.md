@@ -106,7 +106,7 @@ Coverage: Controllers 100%, Services 100%, Repositories 96%
 ## Error Codes
 
 - 200: Success
-- 400: Empty cart, invalid/used discount code, or code belongs to a different user
+- 400: Empty cart / invalid or used discount code / code belongs to a different user / user not eligible for discount / discount already issued for this milestone
 - 404: Cart not found
 - 500: Server error
 
