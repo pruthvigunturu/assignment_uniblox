@@ -11,4 +11,5 @@ public class Order {
     private List<CartItem> items;
     private double totalAmount;
     private double discountApplied;
+    private String earnedDiscountCode; // non-null when this order triggered a reward
 }

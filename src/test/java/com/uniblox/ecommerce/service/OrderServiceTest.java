@@ -159,12 +159,11 @@ class OrderServiceTest {
     }
 
     @Test
-    void checkout_OnNthOrder_ShouldGenerateDiscountCode() {
+    void checkout_OnNthOrder_ShouldGenerateDiscountCodeAndReturnInOrder() {
         CheckoutRequest request = new CheckoutRequest();
         request.setUserId("user1");
         request.setDiscountCode("");
 
-        // Simulate NTH_ORDER orders for user1 after save
         List<Order> nthOrders = new ArrayList<>();
         for (int i = 0; i < AppConstants.NTH_ORDER; i++) {
             Order o = new Order();
@@ -175,9 +174,11 @@ class OrderServiceTest {
         when(cartRepository.findByUserId("user1")).thenReturn(testCart);
         when(orderRepository.findAll()).thenReturn(nthOrders);
 
-        orderService.checkout(request);
+        Order result = orderService.checkout(request);
 
         verify(discountRepository).save(any(Discount.class));
+        assertNotNull(result.getEarnedDiscountCode());
+        assertTrue(result.getEarnedDiscountCode().startsWith(AppConstants.DISCOUNT_CODE_PREFIX));
     }
 
     @Test
@@ -227,10 +228,12 @@ class OrderServiceTest {
 
     @Test
     void generateDiscountForUser_ShouldCreateCodeWithPrefix() {
-        orderService.generateDiscountForUser("user1");
+        String code = orderService.generateDiscountForUser("user1");
 
+        assertNotNull(code);
+        assertTrue(code.startsWith(AppConstants.DISCOUNT_CODE_PREFIX));
         verify(discountRepository).save(argThat(d ->
-                d.getCode().startsWith(AppConstants.DISCOUNT_CODE_PREFIX) &&
+                d.getCode().equals(code) &&
                 d.getUserId().equals("user1") &&
                 d.getPercentage() == AppConstants.DISCOUNT_PERCENTAGE &&
                 !d.isUsed()

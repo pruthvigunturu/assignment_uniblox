@@ -4,6 +4,8 @@ import com.uniblox.ecommerce.AppConstants;
 import com.uniblox.ecommerce.dto.CheckoutRequest;
 import com.uniblox.ecommerce.model.*;
 import com.uniblox.ecommerce.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ public class OrderService {
     @Autowired
     private DiscountRepository discountRepository;
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public Order checkout(CheckoutRequest request) {
@@ -59,9 +62,10 @@ public class OrderService {
 
         if (orderCount > 0 && orderCount % AppConstants.NTH_ORDER == 0) {
             try {
-                generateDiscountForUser(request.getUserId());
+                String earnedCode = generateDiscountForUser(request.getUserId());
+                order.setEarnedDiscountCode(earnedCode);
             } catch (Exception e) {
-                // coupon generation failure must not fail the completed order
+                log.error("Coupon generation failed for user {} after order — will need manual retry", request.getUserId(), e);
             }
         }
 
@@ -70,18 +74,20 @@ public class OrderService {
         return order;
     }
 
-    public void generateDiscountForUser(String userId) {
+    public String generateDiscountForUser(String userId) {
         StringBuilder sb = new StringBuilder(AppConstants.DISCOUNT_CODE_PREFIX);
         for (int i = 0; i < AppConstants.DISCOUNT_CODE_LENGTH; i++) {
             sb.append(AppConstants.DISCOUNT_CODE_ALPHABET.charAt(
                     RANDOM.nextInt(AppConstants.DISCOUNT_CODE_ALPHABET.length())));
         }
+        String code = sb.toString();
         Discount discount = new Discount();
-        discount.setCode(sb.toString());
+        discount.setCode(code);
         discount.setUserId(userId);
         discount.setPercentage(AppConstants.DISCOUNT_PERCENTAGE);
         discount.setUsed(false);
         discountRepository.save(discount);
+        return code;
     }
 
     public long getOrderCountForUser(String userId) {
