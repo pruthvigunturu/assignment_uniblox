@@ -5,7 +5,9 @@ import com.uniblox.ecommerce.model.CartItem;
 import com.uniblox.ecommerce.model.Discount;
 import com.uniblox.ecommerce.model.Order;
 import com.uniblox.ecommerce.service.OrderService;
+import com.uniblox.ecommerce.util.RateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,8 +22,14 @@ public class AdminController {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private RateLimiter rateLimiter;
+
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
+        if (!rateLimiter.tryAcquire("getStats")) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
         List<Order> orders = orderService.getAllOrders();
         Iterable<Discount> discounts = orderService.getAllDiscounts();
 
