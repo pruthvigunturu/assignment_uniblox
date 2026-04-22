@@ -67,7 +67,7 @@ Response: 200 OK or 400 if user not eligible (not at nth order multiple)
 - One-time use discount codes
 - Admin: View statistics (items purchased, net revenue, gross revenue, discounts)
 - Admin: Generate discount codes for eligible users
-- 49 unit tests, 100% pass rate
+- 50 unit tests, 100% pass rate
 
 ## Tech Stack
 
@@ -97,7 +97,7 @@ config/      AppConstants (NTH_ORDER, DISCOUNT_PERCENTAGE, code alphabet)
 ## Testing
 
 ```bash
-mvn test                    # Run all 49 tests
+mvn test                    # Run all 50 tests
 mvn jacoco:report          # Generate coverage report
 ```
 

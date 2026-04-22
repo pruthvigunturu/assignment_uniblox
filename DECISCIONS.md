@@ -56,7 +56,7 @@
 
 **Choice:** Global one-time use with isUsed flag.
 
-**Why:** Simple to implement (single boolean flag). Prevents fraud effectively. Clear business logic: "one discount code = one transaction." Aligns with reward system (each 5th order = one discount).
+**Why:** Simple to implement (single boolean flag). Prevents fraud effectively. Clear business logic: "one discount code = one transaction." Aligns with reward system (each nth order = one discount, where n is configurable via `AppConstants.NTH_ORDER`).
 
 ---
 
@@ -147,6 +147,21 @@
 **Choice:** Compare `issuedCodes` (count of discount codes stored for this user) against `entitledCodes` (`orderCount / NTH_ORDER`). Reject with 400 if `issuedCodes >= entitledCodes`.
 
 **Why:** Derived entirely from existing data — no new state needed. `entitledCodes` is always the ground truth of what the user has earned. `issuedCodes` counts what they actually received. The gap between them is exactly how many codes can still be issued. Consistent with the principle of deriving counts from actual records rather than maintaining separate counters.
+
+---
+
+## Decision: Atomic Discount Code Generation with putIfAbsent and Retry
+
+**Context:** Discount code generation involves building a random code and saving it. With concurrent requests, two threads could generate the same code, both check that it doesn't exist, and both save it — silently overwriting one entry (check-then-act race condition).
+
+**Options Considered:**
+- `save()` with prior `findByCode()` check — still has a race window between check and save
+- Database unique constraint + catch duplicate key exception (production approach)
+- `ConcurrentHashMap.putIfAbsent()` — atomic check-and-insert in a single operation
+
+**Choice:** `saveIfAbsent()` wrapping `putIfAbsent()`, with a retry loop (max 3 attempts) and a warn log on collision.
+
+**Why:** `putIfAbsent` is atomic — no thread can slip in between the check and the insert. This is the in-memory equivalent of a database unique constraint. A retry loop handles the (astronomically unlikely) collision case gracefully. If all 3 attempts fail, a `RuntimeException` is thrown — caught by `checkout()`'s try/catch so the completed order is never affected.
 
 ---
 

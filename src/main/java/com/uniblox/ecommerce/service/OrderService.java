@@ -56,6 +56,7 @@ public class OrderService {
         order.setDiscountApplied(discountApplied);
         orderRepository.save(order);
 
+        //expensive for compute with current local db
         long orderCount = orderRepository.findAll().stream()
                 .filter(o -> request.getUserId().equals(o.getUserId()))
                 .count();
