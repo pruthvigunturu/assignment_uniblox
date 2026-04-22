@@ -91,22 +91,6 @@
 
 ---
 
-## Decision: Exception-Based Error Handling
-
-**Context:** Business logic can fail (empty cart, invalid discount). Need to communicate errors to caller.
-
-**Options Considered:**
-- Return null values
-- Return error codes
-- Throw exceptions with messages
-- Use Result/Either pattern
-
-**Choice:** Throw meaningful exceptions.
-
-**Why:** Clear what went wrong immediately. Stack traces show exact problem location. Standard Java exception pattern. Easy to test with assertThrows. Controllers map exceptions to appropriate HTTP status codes.
-
----
-
 ## Decision: User-Bound Discount Codes
 
 **Context:** Discount codes are generated as rewards for a specific user completing their nth order. Decide whether codes should be tied to that user or usable by anyone.
@@ -165,15 +149,3 @@
 
 ---
 
-## Decision: Update Quantity on Duplicate Items in Cart
-
-**Context:** User adds same product to cart multiple times. Need to decide handling.
-
-**Options Considered:**
-- Create duplicate CartItem entries
-- Update quantity of existing item
-- Reject duplicate with error
-
-**Choice:** Update quantity of existing item.
-
-**Why:** More intuitive UX (users expect quantity to increase). Cart stays lean without duplicates. Real-world shopping behavior. Simple implementation using streams for deduplication.
