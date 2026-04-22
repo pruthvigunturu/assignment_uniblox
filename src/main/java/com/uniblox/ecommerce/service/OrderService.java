@@ -75,19 +75,28 @@ public class OrderService {
     }
 
     public String generateDiscountForUser(String userId) {
-        StringBuilder sb = new StringBuilder(AppConstants.DISCOUNT_CODE_PREFIX);
-        for (int i = 0; i < AppConstants.DISCOUNT_CODE_LENGTH; i++) {
-            sb.append(AppConstants.DISCOUNT_CODE_ALPHABET.charAt(
-                    RANDOM.nextInt(AppConstants.DISCOUNT_CODE_ALPHABET.length())));
+        for (int attempt = 0; attempt < 3; attempt++) {
+            StringBuilder sb = new StringBuilder(AppConstants.DISCOUNT_CODE_PREFIX);
+            for (int i = 0; i < AppConstants.DISCOUNT_CODE_LENGTH; i++) {
+                sb.append(AppConstants.DISCOUNT_CODE_ALPHABET.charAt(
+                        RANDOM.nextInt(AppConstants.DISCOUNT_CODE_ALPHABET.length())));
+            }
+            String code = sb.toString();
+            Discount discount = new Discount();
+            discount.setCode(code);
+            discount.setUserId(userId);
+            discount.setPercentage(AppConstants.DISCOUNT_PERCENTAGE);
+            discount.setUsed(false);
+            if (discountRepository.saveIfAbsent(discount)) {
+                return code;
+            }
+            log.warn("Discount code collision on attempt {} for user {}, retrying", attempt + 1, userId);
         }
-        String code = sb.toString();
-        Discount discount = new Discount();
-        discount.setCode(code);
-        discount.setUserId(userId);
-        discount.setPercentage(AppConstants.DISCOUNT_PERCENTAGE);
-        discount.setUsed(false);
-        discountRepository.save(discount);
-        return code;
+        throw new RuntimeException("Failed to generate unique discount code after 3 attempts");
+    }
+
+    public long getIssuedDiscountCountForUser(String userId) {
+        return discountRepository.countByUserId(userId);
     }
 
     public long getOrderCountForUser(String userId) {

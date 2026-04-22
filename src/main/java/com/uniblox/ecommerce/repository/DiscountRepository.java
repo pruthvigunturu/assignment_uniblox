@@ -24,8 +24,19 @@ public class DiscountRepository {
         discounts.put(discount.getCode(), discount);
     }
 
+    // Atomic check-and-insert — returns true if saved, false if code already exists
+    public boolean saveIfAbsent(Discount discount) {
+        return discounts.putIfAbsent(discount.getCode(), discount) == null;
+    }
+
     public Iterable<Discount> findAll() {
         return discounts.values();
+    }
+
+    public long countByUserId(String userId) {
+        return discounts.values().stream()
+                .filter(d -> userId.equals(d.getUserId()))
+                .count();
     }
 }
 

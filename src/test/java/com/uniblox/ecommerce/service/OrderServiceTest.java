@@ -173,10 +173,11 @@ class OrderServiceTest {
 
         when(cartRepository.findByUserId("user1")).thenReturn(testCart);
         when(orderRepository.findAll()).thenReturn(nthOrders);
+        when(discountRepository.saveIfAbsent(any(Discount.class))).thenReturn(true);
 
         Order result = orderService.checkout(request);
 
-        verify(discountRepository).save(any(Discount.class));
+        verify(discountRepository).saveIfAbsent(any(Discount.class));
         assertNotNull(result.getEarnedDiscountCode());
         assertTrue(result.getEarnedDiscountCode().startsWith(AppConstants.DISCOUNT_CODE_PREFIX));
     }
@@ -196,9 +197,9 @@ class OrderServiceTest {
 
         when(cartRepository.findByUserId("user1")).thenReturn(testCart);
         when(orderRepository.findAll()).thenReturn(nthOrders);
-        doThrow(new RuntimeException("generation failed")).when(discountRepository).save(any(Discount.class));
+        // saveIfAbsent returning false on all attempts causes generation to throw — cart must still clear
+        when(discountRepository.saveIfAbsent(any(Discount.class))).thenReturn(false);
 
-        // order should succeed and cart should be cleared despite generation failure
         Order result = orderService.checkout(request);
 
         assertNotNull(result);
@@ -223,16 +224,18 @@ class OrderServiceTest {
 
         orderService.checkout(request);
 
-        verify(discountRepository, never()).save(any(Discount.class));
+        verify(discountRepository, never()).saveIfAbsent(any(Discount.class));
     }
 
     @Test
     void generateDiscountForUser_ShouldCreateCodeWithPrefix() {
+        when(discountRepository.saveIfAbsent(any(Discount.class))).thenReturn(true);
+
         String code = orderService.generateDiscountForUser("user1");
 
         assertNotNull(code);
         assertTrue(code.startsWith(AppConstants.DISCOUNT_CODE_PREFIX));
-        verify(discountRepository).save(argThat(d ->
+        verify(discountRepository).saveIfAbsent(argThat(d ->
                 d.getCode().equals(code) &&
                 d.getUserId().equals("user1") &&
                 d.getPercentage() == AppConstants.DISCOUNT_PERCENTAGE &&
