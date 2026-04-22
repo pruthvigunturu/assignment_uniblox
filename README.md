@@ -53,7 +53,7 @@ Response: 200 OK or 400 if user not eligible (not at 5th order multiple)
 
 - Add items to cart (updates quantity on duplicate)
 - Checkout with discount validation
-- Auto-generate 10% discount after 5th order
+- Auto-generate 15% discount after 5th order
 - One-time use discount codes
 - Admin: View statistics (items, revenue, discounts)
 - Admin: Generate discount codes for eligible users
