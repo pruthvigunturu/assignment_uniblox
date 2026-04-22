@@ -194,7 +194,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"orderId\": \"ORDER_user1_1713046800000\",\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ],\n  \"totalAmount\": 20.0,\n  \"discountApplied\": 0.0\n}"
+              "body": "{\n  \"orderId\": \"ORD1\",\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ],\n  \"totalAmount\": 20.0,\n  \"discountApplied\": 0.0,\n  \"earnedDiscountCode\": null\n}"
             },
             {
               "name": "Successful Checkout (200 OK) - With Valid Discount",
@@ -208,7 +208,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"userId\": \"user1\",\n  \"discountCode\": \"DISCuser11713046800000\"\n}"
+                  "raw": "{\n  \"userId\": \"user1\",\n  \"discountCode\": \"UNIK7M3P9QX\"\n}"
                 },
                 "url": {
                   "raw": "http://localhost:8080/api/checkout",
@@ -227,7 +227,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"orderId\": \"ORDER_user1_1713046800000\",\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ],\n  \"totalAmount\": 18.0,\n  \"discountApplied\": 2.0\n}"
+              "body": "{\n  \"orderId\": \"ORD2\",\n  \"userId\": \"user1\",\n  \"items\": [\n    {\n      \"productId\": \"prod1\",\n      \"quantity\": 2,\n      \"price\": 10.0\n    }\n  ],\n  \"totalAmount\": 18.0,\n  \"discountApplied\": 2.0,\n  \"earnedDiscountCode\": \"UNIXK2M9PQ3R\"\n}"
             },
             {
               "name": "Checkout Failed (400) - Empty Cart",
@@ -340,7 +340,7 @@
                  "value": "application/json"
                }
              ],
-             "body": "{\n  \"totalItemsPurchased\": 15,\n  \"totalRevenue\": 250.0,\n  \"totalDiscountCodes\": 2,\n  \"totalDiscountsGiven\": 25.0\n}"
+             "body": "{\n  \"totalItemsPurchased\": 15,\n  \"totalRevenue\": 250.0,\n  \"grossRevenue\": 275.0,\n  \"totalDiscountCodes\": 2,\n  \"totalDiscountsGiven\": 25.0\n}"
            }
          ]
        },

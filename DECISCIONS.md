@@ -30,18 +30,18 @@
 
 ---
 
-## Decision: Auto-Generate Discounts on 5th Order
+## Decision: Auto-Generate Discounts on nth Order (Configurable)
 
-**Context:** Assignment requires reward system where "every nth order gets a coupon code." Need to decide when and how to generate discounts.
+**Context:** Assignment requires reward system where "every nth order gets a coupon code." Need to decide when, how, and with what trigger frequency to generate discounts.
 
 **Options Considered:**
 - Manual admin generation of discount codes
-- Auto-generate during checkout on 5th order
+- Auto-generate during checkout on every nth order
 - Batch process discounts periodically
 
-**Choice:** Auto-generate during checkout on 5th order.
+**Choice:** Auto-generate during checkout when `orderCount % NTH_ORDER == 0`.
 
-**Why:** Automatic with no manual intervention. Reward tied to actual completed orders. Users receive discount immediately after qualifying order. Simple implementation in OrderService.checkout().
+**Why:** Automatic with no manual intervention. Reward tied to actual completed orders. Users receive the discount code immediately in the checkout response — no separate polling needed. `NTH_ORDER` and `DISCOUNT_PERCENTAGE` are extracted to `AppConstants` so the reward cadence and amount can be changed in one place without touching business logic or tests.
 
 ---
 

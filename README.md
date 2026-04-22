@@ -32,32 +32,42 @@ Response: 200 OK - Cart object or 404
 ### Checkout
 ```
 POST /api/checkout
-{ "userId": "user1", "discountCode": "DISC10" }
+{ "userId": "user1", "discountCode": "UNIК7M3P9QX" }
 Response: 200 OK - Order object (or 400 on error)
+
+Order response includes earnedDiscountCode (non-null when this order triggered a reward):
+{
+  "orderId": "ORD3",
+  "userId": "user1",
+  "totalAmount": 85.0,
+  "discountApplied": 0.0,
+  "earnedDiscountCode": "UNIXK2M9PQ3R"
+}
 ```
 
 ### Admin: Get Stats
 ```
 GET /api/admin/stats
-Response: 200 OK - { totalItemsPurchased, totalRevenue, totalDiscountCodes, totalDiscountsGiven }
+Response: 200 OK - { totalItemsPurchased, totalRevenue, grossRevenue, totalDiscountCodes, totalDiscountsGiven }
 ```
 
 ### Admin: Generate Discount
 ```
 POST /api/admin/generate-discount
 { "userId": "user1" }
-Response: 200 OK or 400 if user not eligible (not at 5th order multiple)
+Response: 200 OK or 400 if user not eligible (not at nth order multiple)
 ```
 
 ## Features
 
 - Add items to cart (updates quantity on duplicate)
-- Checkout with discount validation
-- Auto-generate 15% discount after 5th order
+- Checkout with discount validation (codes are user-bound — only the earner can redeem)
+- Auto-generate discount after every nth order (configurable via `AppConstants.NTH_ORDER`)
+- Earned discount code returned directly in checkout response
 - One-time use discount codes
-- Admin: View statistics (items, revenue, discounts)
+- Admin: View statistics (items purchased, net revenue, gross revenue, discounts)
 - Admin: Generate discount codes for eligible users
-- ~50 unit tests (100% pass rate)
+- 49 unit tests, 100% pass rate
 
 ## Tech Stack
 
@@ -68,23 +78,26 @@ Java 17, Spring Boot 4.0.5, Maven, JUnit 5, Mockito, JaCoCo, ConcurrentHashMap
 ```
 controller/  CartController, CheckoutController, AdminController
 service/     CartService, OrderService
-repository/  CartRepository, OrderRepository, UserRepository, DiscountRepository
-model/       Cart, CartItem, Order, User, Discount
+repository/  CartRepository, OrderRepository, DiscountRepository
+model/       Cart, CartItem, Order, Discount
 dto/         AddToCartRequest, CheckoutRequest
+config/      AppConstants (NTH_ORDER, DISCOUNT_PERCENTAGE, code alphabet)
 ```
 
 ## How It Works
 
 1. Add items to cart
-2. Checkout creates order, validates discount, increments user order count
-3. Every 5th order generates a 10% discount code
-4. Discount codes are one-time use
-5. Cart clears after successful checkout
+2. Checkout creates order, validates and applies discount if provided
+3. Order count derived from actual orders (no separate counter)
+4. Every nth order auto-generates a reward discount code
+5. Earned code returned in the checkout response so user sees it immediately
+6. Discount codes are user-bound — validated at redemption
+7. Cart clears after successful checkout
 
 ## Testing
 
 ```bash
-mvn test                    # Run all 37 tests
+mvn test                    # Run all 49 tests
 mvn jacoco:report          # Generate coverage report
 ```
 
@@ -93,7 +106,7 @@ Coverage: Controllers 100%, Services 100%, Repositories 96%
 ## Error Codes
 
 - 200: Success
-- 400: Empty cart or invalid discount code
+- 400: Empty cart, invalid/used discount code, or code belongs to a different user
 - 404: Cart not found
 - 500: Server error
 
