@@ -15,7 +15,6 @@ public class CheckoutController {
     private OrderService orderService;
 
     @PostMapping
-    // Critical: Service throws IllegalArgumentException for empty cart or invalid discount - Spring converts to 400
     public ResponseEntity<Order> checkout(@RequestBody CheckoutRequest request) {
         Order order = orderService.checkout(request);
         return ResponseEntity.ok(order);
